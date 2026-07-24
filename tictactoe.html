@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Emoji Tic Tac Toe Prank</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0f16;
+      --panel: rgba(18, 25, 35, 0.95);
+      --panel-strong: #152033;
+      --text: #f3f7fb;
+      --primary: #ff4d6d;
+      --secondary: #55e7ff;
+      --accent: #ffd93d;
+      --danger: #f2514b;
+      --flash1: #ffffff;
+      --flash2: #ffeb3b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: radial-gradient(circle at top, rgba(69, 142, 255, 0.15), transparent 40%),
+                  radial-gradient(circle at bottom right, rgba(255, 77, 109, 0.14), transparent 28%),
+                  var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      transition: background-color 0.2s ease;
+      min-height: 100vh;
+    }
+
+    .flash-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      background: #ffffff;
+      opacity: 0;
+      transition: opacity 0.1s ease;
+    }
+
+    .flash-overlay.active {
+      animation: screenFlashFull 8s ease-in-out forwards;
+    }
+
+    @keyframes screenFlashFull {
+      0% { opacity: 0; background: #ffffff; }
+      5% { opacity: 1; background: #ffffff; }
+      12% { opacity: 0.85; }
+      18% { opacity: 0; }
+      25% { opacity: 0.98; background: #ffffff; }
+      32% { opacity: 0.7; background: #fffce7; }
+      38% { opacity: 0; }
+      45% { opacity: 1; background: #ffffff; }
+      52% { opacity: 0.92; background: #fff3a8; }
+      58% { opacity: 0; }
+      65% { opacity: 0.96; background: #ffffff; }
+      72% { opacity: 0.75; background: #fff7d6; }
+      78% { opacity: 0; }
+      85% { opacity: 0.8; background: #ffffff; }
+      92% { opacity: 0.25; background: #fffdf8; }
+      100% { opacity: 0; }
+    }
+
+    .container {
+      width: min(560px, 100%);
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      box-shadow: 0 32px 90px rgba(0, 0, 0, 0.25);
+      padding: 28px;
+      text-align: center;
+      position: relative;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin-bottom: 12px;
+      letter-spacing: 0.04em;
+    }
+
+    p {
+      margin-bottom: 24px;
+      color: rgba(243, 247, 251, 0.78);
+      line-height: 1.6;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .cell {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 22px;
+      border: 2px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      display: grid;
+      align-items: center;
+      justify-items: center;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+      user-select: none;
+    }
+
+    .cell:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+
+    .cell.marked {
+      pointer-events: none;
+      transform: scale(1.03);
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .flash-text {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .status {
+      margin-bottom: 18px;
+      font-size: 1.1rem;
+      min-height: 1.5em;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #07101a;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 35px rgba(0, 0, 0, 0.18);
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.09);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    button.danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .helper {
+      color: rgba(243, 247, 251, 0.64);
+      margin-top: 8px;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="gameContainer">
+    <h1>Emoji Tic Tac Toe</h1>
+    <p>Play with emoji icons. After someone wins or the board fills, the screen will flash for a surprise prank effect.</p>
+    <div class="status" id="status">Player ❌ starts</div>
+    <div class="board" id="board">
+      <button class="cell" data-cell="0"></button>
+      <button class="cell" data-cell="1"></button>
+      <button class="cell" data-cell="2"></button>
+      <button class="cell" data-cell="3"></button>
+      <button class="cell" data-cell="4"></button>
+      <button class="cell" data-cell="5"></button>
+      <button class="cell" data-cell="6"></button>
+      <button class="cell" data-cell="7"></button>
+      <button class="cell" data-cell="8"></button>
+    </div>
+    <div class="buttons">
+      <button id="restartBtn">Restart Game</button>
+      <button class="secondary" id="flashBtn">Flash Now</button>
+      <button class="danger" id="prankBtn">Prank Mode</button>
+    </div>
+    <div class="helper">Tip: Use the "Flash Now" button or win the game to trigger a screen flash effect.</div>
+  </div>
+  <div class="flash-overlay" id="flashOverlay"></div>
+
+  <script>
+    const boardElement = document.getElementById('board');
+    const gameContainer = document.getElementById('gameContainer');
+    const flashOverlay = document.getElementById('flashOverlay');
+    const statusElement = document.getElementById('status');
+    const restartBtn = document.getElementById('restartBtn');
+    const flashBtn = document.getElementById('flashBtn');
+    const prankBtn = document.getElementById('prankBtn');
+    const cells = Array.from(document.querySelectorAll('.cell'));
+
+    const emojiPlayers = ['❌', '⭕'];
+    let currentPlayer = 0;
+    let boardState = Array(9).fill('');
+    let gameActive = true;
+    let flashTimeout = null;
+
+    const winningCombinations = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6]
+    ];
+
+    function updateStatus(message) {
+      statusElement.textContent = message;
+    }
+
+    function flashScreen() {
+      flashOverlay.classList.add('active');
+      clearTimeout(flashTimeout);
+      flashTimeout = setTimeout(() => {
+        flashOverlay.classList.remove('active');
+      }, 8200);
+    }
+
+    function getWinner() {
+      for (const combination of winningCombinations) {
+        const [a, b, c] = combination;
+        if (
+          boardState[a] &&
+          boardState[a] === boardState[b] &&
+          boardState[a] === boardState[c]
+        ) {
+          return boardState[a];
+        }
+      }
+      return null;
+    }
+
+    function handleCellClick(event) {
+      const cell = event.currentTarget;
+      const index = Number(cell.dataset.cell);
+
+      if (!gameActive || boardState[index]) {
+        return;
+      }
+
+      boardState[index] = emojiPlayers[currentPlayer];
+      cell.textContent = emojiPlayers[currentPlayer];
+      cell.classList.add('marked');
+
+      const winner = getWinner();
+      const tie = boardState.every(value => value);
+
+        if (winner) {
+        gameActive = false;
+        gameContainer.classList.add('hidden');
+        updateStatus(`Winner ${winner}! The screen will flash!`);
+        flashScreen();
+        return;
+      }
+
+      if (tie) {
+        gameActive = false;
+        gameContainer.classList.add('hidden');
+        updateStatus('It is a tie! Flashing the screen as a finish effect.');
+        flashScreen();
+        return;
+      }
+
+      currentPlayer = 1 - currentPlayer;
+      updateStatus(`Player ${emojiPlayers[currentPlayer]}'s turn`);
+    }
+
+    function resetGame() {
+      boardState.fill('');
+      currentPlayer = 0;
+      gameActive = true;
+      gameContainer.classList.remove('hidden');
+      updateStatus('Player ❌ starts');
+      cells.forEach(cell => {
+        cell.textContent = '';
+        cell.classList.remove('marked');
+        cell.removeEventListener('click', flashScreen);
+      });
+      prankBtn.textContent = 'Prank Mode';
+      prankBtn.disabled = false;
+      flashOverlay.classList.remove('active');
+      clearTimeout(flashTimeout);
+    }
+
+    function activatePrankMode() {
+      if (!gameActive) {
+        updateStatus('Restart the game first to prank again.');
+        return;
+      }
+      updateStatus('Prank mode engaged! Clicking any square will now flash harder.');
+      cells.forEach(cell => {
+        cell.addEventListener('click', flashScreen, { once: false });
+      });
+      prankBtn.textContent = 'Prank Active';
+      prankBtn.disabled = true;
+    }
+
+    cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+    restartBtn.addEventListener('click', resetGame);
+    flashBtn.addEventListener('click', flashScreen);
+    prankBtn.addEventListener('click', activatePrankMode);
+  </script>
+</body>
+</html>
